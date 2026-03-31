@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exploratory Tester</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0f12;
+      --surface: #161a20;
+      --surface2: #1e242d;
+      --border: #2a3140;
+      --accent: #00d4aa;
+      --accent-dim: rgba(0, 212, 170, 0.12);
+      --accent-glow: rgba(0, 212, 170, 0.3);
+      --red: #ff4d6a;
+      --red-dim: rgba(255, 77, 106, 0.12);
+      --yellow: #ffc940;
+      --yellow-dim: rgba(255, 201, 64, 0.12);
+      --blue: #4da6ff;
+      --blue-dim: rgba(77, 166, 255, 0.12);
+      --green: #5cdb95;
+      --green-dim: rgba(92, 219, 149, 0.12);
+      --purple: #b47cff;
+      --purple-dim: rgba(180, 124, 255, 0.12);
+      --text: #e2e8f0;
+      --text-muted: #64748b;
+      --text-dim: #94a3b8;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'IBM Plex Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .logo-mark {
+      width: 26px;
+      height: 26px;
+      background: var(--accent);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #000;
+      font-weight: 700;
+      font-family: var(--mono);
+      flex-shrink: 0;
+    }
+
+    .header h1 {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .header-sub {
+      font-size: 9px;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      letter-spacing: 0.05em;
+    }
+
+    /* Control bar */
+    .control-bar {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .btn {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      padding: 7px 12px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-transform: uppercase;
+    }
+
+    .btn-start {
+      background: var(--accent);
+      color: #000;
+      flex: 1;
+    }
+
+    .btn-start:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-start:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      filter: none;
+    }
+
+    .btn-stop {
+      background: var(--red-dim);
+      color: var(--red);
+      border: 1px solid var(--red);
+      flex: 1;
+    }
+
+    .btn-stop:hover {
+      background: var(--red);
+      color: #fff;
+    }
+
+    .btn-stop:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .btn-export {
+      background: var(--surface2);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      padding: 7px 10px;
+    }
+
+    .btn-export:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+
+    /* Context indicator pill */
+    .ctx-pill {
+      font-family: var(--mono);
+      font-size: 9px;
+      padding: 3px 8px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .ctx-pill.has-context {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .ctx-pill:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Status bar */
+    .status-bar {
+      padding: 7px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+
+    .status-indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      transition: background 0.3s;
+    }
+
+    .status-indicator.running {
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent-glow);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.4
+      }
+    }
+
+    .stat {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .stat-value {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .env-badge {
+      margin-left: auto;
+      background: var(--purple-dim);
+      border: 1px solid var(--purple);
+      color: var(--purple);
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-size: 9px;
+      display: none;
+    }
+
+    .env-badge.show {
+      display: block;
+    }
+
+    /* Tabs */
+    .tab-bar {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+      overflow-x: auto;
+    }
+
+    .tab {
+      padding: 9px 12px;
+      font-size: 10px;
+      font-weight: 500;
+      font-family: var(--mono);
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .tab:hover {
+      color: var(--text-dim);
+    }
+
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 15px;
+      height: 15px;
+      padding: 0 3px;
+      border-radius: 7px;
+      background: var(--red);
+      color: #fff;
+      font-size: 8px;
+      font-weight: 700;
+      margin-left: 4px;
+    }
+
+    /* Panels */
+    .panel {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      flex-direction: column;
+    }
+
+    .panel.active {
+      display: flex;
+    }
+
+    /* Findings */
+    .filter-bar {
+      padding: 7px 8px;
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+
+    .filter-chip {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.03em;
+      padding: 3px 7px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-chip:hover,
+    .filter-chip.active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .findings-list {
+      padding: 7px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .finding-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 11px;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .finding-card:hover {
+      background: var(--surface2);
+    }
+
+    .finding-card.high {
+      border-left-color: var(--red);
+    }
+
+    .finding-card.medium {
+      border-left-color: var(--yellow);
+    }
+
+    .finding-card.low {
+      border-left-color: var(--blue);
+    }
+
+    .finding-header {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 4px;
+    }
+
+    .finding-type {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+
+    .type-js_error,
+    .type-network_failure {
+      background: var(--red-dim);
+      color: var(--red);
+    }
+
+    .type-form_validation {
+      background: var(--blue-dim);
+      color: var(--blue);
+    }
+
+    .type-ui_layout,
+    .type-broken_link {
+      background: var(--yellow-dim);
+      color: var(--yellow);
+    }
+
+    .type-spell_check {
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .type-assertion_failure {
+      background: var(--red-dim);
+      color: var(--red);
+    }
+
+    /* ── Summary Panel ── */
+    .sum-header {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      padding: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .sum-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .sum-stat-val {
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .sum-stat-lbl {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .sum-divider {
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      padding: 5px 0 3px;
+      margin: 8px 0 5px;
+    }
+
+    .sum-section {
+      margin-bottom: 6px;
+    }
+
+    .sum-section-title {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .sum-item {
+      display: flex;
+      gap: 7px;
+      font-size: 11px;
+      color: var(--text-dim);
+      padding: 2px 0;
+      line-height: 1.4;
+      align-items: flex-start;
+    }
+
+    .sum-bullet {
+      font-size: 10px;
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+
+    .sum-url {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 240px;
+    }
+
+    .sum-pages {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .sum-page-item {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      padding: 2px 4px;
+      background: var(--surface);
+      border-radius: 3px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .finding-title {
+      font-size: 12px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .finding-detail {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      line-height: 1.4;
+    }
+
+    .finding-meta {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .env-tag {
+      color: var(--purple);
+    }
+
+    /* LLM Activity */
+    .activity-feed {
+      padding: 7px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .activity-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 11px;
+    }
+
+    .activity-action {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--accent);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .activity-reason {
+      color: var(--text-dim);
+      font-size: 11px;
+      margin-top: 3px;
+      line-height: 1.4;
+    }
+
+    .activity-learning {
+      color: var(--purple);
+      font-size: 10px;
+      font-family: var(--mono);
+      margin-top: 4px;
+    }
+
+    .activity-time {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── CONTEXT TAB ── */
+    .context-content {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .context-url-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .context-url-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      flex-shrink: 0;
+    }
+
+    .context-url-value {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--accent);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ctx-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .ctx-section-header {
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ctx-section-title {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .ctx-scope-badge {
+      font-family: var(--mono);
+      font-size: 8px;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .scope-app {
+      background: var(--purple-dim);
+      color: var(--purple);
+    }
+
+    .scope-page {
+      background: var(--blue-dim);
+      color: var(--blue);
+    }
+
+    .scope-dynamic {
+      background: var(--green-dim);
+      color: var(--green);
+    }
+
+    .ctx-section-body {
+      padding: 12px;
+    }
+
+    /* Seed area */
+    .seed-area {
+      width: 100%;
+      min-height: 90px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 9px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text);
+      resize: vertical;
+      outline: none;
+      line-height: 1.5;
+      transition: border-color 0.15s;
+    }
+
+    .seed-area:focus {
+      border-color: var(--accent);
+    }
+
+    .seed-area::placeholder {
+      color: var(--text-muted);
+    }
+
+    .ctx-actions {
+      display: flex;
+      gap: 7px;
+      margin-top: 9px;
+    }
+
+    .btn-ctx {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      padding: 7px 12px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-transform: uppercase;
+    }
+
+    .btn-analyze {
+      background: var(--accent);
+      color: #000;
+      flex: 1;
+    }
+
+    .btn-analyze:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-analyze:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .btn-clear-ctx {
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-clear-ctx:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    /* Edit mode toggle */
+    .edit-toggle {
+      display: flex;
+      gap: 0;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .edit-toggle-btn {
+      flex: 1;
+      padding: 6px;
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .edit-toggle-btn.active {
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    /* Diff preview */
+    .diff-preview {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .diff-preview.show {
+      display: block;
+    }
+
+    .diff-summary {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+      font-style: italic;
+    }
+
+    .diff-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+    }
+
+    .diff-row:last-child {
+      border-bottom: none;
+    }
+
+    .diff-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      min-width: 55px;
+      padding-top: 1px;
+    }
+
+    .diff-label.ADD {
+      color: var(--green);
+    }
+
+    .diff-label.UPDATE {
+      color: var(--yellow);
+    }
+
+    .diff-label.KEEP {
+      color: var(--text-muted);
+    }
+
+    .diff-value {
+      color: var(--text-dim);
+      flex: 1;
+      line-height: 1.4;
+    }
+
+    .diff-reason {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      margin-top: 2px;
+    }
+
+    .btn-confirm-merge {
+      width: 100%;
+      background: var(--green);
+      color: #000;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 8px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: filter 0.15s;
+    }
+
+    .btn-confirm-merge:hover {
+      filter: brightness(1.1);
+    }
+
+    /* Manual edit fields */
+    .manual-fields {
+      display: none;
+    }
+
+    .manual-fields.show {
+      display: block;
+    }
+
+    .llm-view {
+      display: block;
+    }
+
+    .llm-view.hide {
+      display: none;
+    }
+
+    .ctx-summary-text {
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.5;
+      background: var(--bg);
+      border-radius: 5px;
+      padding: 9px;
+      border: 1px solid var(--border);
+    }
+
+    .ctx-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 8px;
+    }
+
+    .ctx-tag {
+      font-family: var(--mono);
+      font-size: 9px;
+      padding: 3px 8px;
+      border-radius: 3px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+    }
+
+    .ctx-empty {
+      color: var(--text-muted);
+      font-size: 11px;
+      font-family: var(--mono);
+      font-style: italic;
+    }
+
+    /* Dynamic learnings */
+    .learning-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    .learning-item {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--green);
+      padding: 4px 7px;
+      background: var(--green-dim);
+      border-radius: 3px;
+      line-height: 1.4;
+    }
+
+    .btn-clear-dynamic {
+      font-family: var(--mono);
+      font-size: 9px;
+      padding: 4px 9px;
+      border-radius: 4px;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-clear-dynamic:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    /* ── SETTINGS ── */
+    .settings-content {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .settings-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .settings-section h3 {
+      font-size: 10px;
+      font-weight: 600;
+      font-family: var(--mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 9px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 7px 9px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    select option {
+      background: var(--surface);
+    }
+
+    .provider-fields {
+      display: none;
+    }
+
+    .btn-save {
+      width: 100%;
+      background: var(--accent);
+      color: #000;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 9px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      transition: filter 0.15s;
+      margin-top: 4px;
+    }
+
+    .btn-save:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-test-conn {
+      background: var(--surface2);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 7px;
+    }
+
+    .btn-test-conn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .conn-status {
+      font-family: var(--mono);
+      font-size: 10px;
+      margin-top: 5px;
+    }
+
+    .conn-status.ok {
+      color: var(--green);
+    }
+
+    .conn-status.err {
+      color: var(--red);
+    }
+
+    /* Environments */
+    .env-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .env-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 8px 10px;
+    }
+
+    .env-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .env-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .env-name {
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .env-url {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn-env-remove {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px 5px;
+      border-radius: 3px;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .btn-env-remove:hover {
+      color: var(--red);
+      background: var(--red-dim);
+    }
+
+    .add-env-form {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+    }
+
+    .add-env-form h4 {
+      font-family: var(--mono);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 9px;
+    }
+
+    .btn-add-env {
+      background: var(--surface2);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 7px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .btn-add-env:hover {
+      background: var(--accent-dim);
+    }
+
+    /* Empty state */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      color: var(--text-muted);
+      font-size: 12px;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .empty-icon {
+      font-size: 28px;
+      opacity: 0.3;
+    }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-right: 5px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-mark">ET</div>
+      <div>
+        <div class="header h1" style="font-size:13px;font-weight:600">Exploratory Tester</div>
+        <div class="header-sub">AI-POWERED QA</div>
+      </div>
+    </div>
+    <div id="ctxPill" class="ctx-pill" title="Click to go to Context tab">NO CONTEXT</div>
+  </div>
+
+  <!-- Control Bar -->
+  <div class="control-bar">
+    <button class="btn btn-start" id="btnStart">▶ Start</button>
+    <button class="btn btn-stop" id="btnStop" disabled>■ Stop</button>
+    <button class="btn btn-export" id="btnExport" title="Export">↓</button>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div class="status-indicator" id="statusDot"></div>
+    <div class="stat"><span>FINDINGS</span><span class="stat-value" id="statFindings">0</span></div>
+    <div class="stat"><span>ACTIONS</span><span class="stat-value" id="statActions">0/30</span></div>
+    <div class="env-badge" id="envBadge"></div>
+  </div>
+
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <div class="tab active" data-tab="findings">FINDINGS <span class="tab-badge" id="findingsBadge"
+        style="display:none">0</span></div>
+    <div class="tab" data-tab="activity">ACTIONS</div>
+    <div class="tab" data-tab="devtools">CDP LOGS</div>
+    <div class="tab" data-tab="context">CONTEXT</div>
+    <div class="tab" data-tab="summary">SUMMARY</div>
+    <div class="tab" data-tab="settings">SETTINGS</div>
+  </div>
+
+  <!-- ── FINDINGS PANEL ── -->
+  <div class="panel active" id="panel-findings">
+    <div class="filter-bar">
+      <button class="filter-chip active" data-filter="all">ALL</button>
+      <button class="filter-chip" data-filter="high">HIGH</button>
+      <button class="filter-chip" data-filter="medium">MED</button>
+      <button class="filter-chip" data-filter="js_error">JS</button>
+      <button class="filter-chip" data-filter="network_failure">NET</button>
+      <button class="filter-chip" data-filter="form_validation">FORM</button>
+      <button class="filter-chip" data-filter="ui_layout">UI</button>
+    </div>
+    <div class="findings-list" id="findingsList">
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <div>No findings yet</div>
+        <div style="font-size:10px;font-family:var(--mono)">Press START to begin</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LLM ACTIVITY PANEL ── -->
+  <div class="panel" id="panel-activity">
+    <div class="activity-feed" id="activityFeed">
+      <div class="empty-state">
+        <div class="empty-icon">🤖</div>
+        <div>No actions yet</div>
+        <div style="font-size:10px;font-family:var(--mono)">Press START to begin</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CDP DEVTOOLS LOG PANEL ── -->
+  <div class="panel" id="panel-devtools">
+    <div
+      style="padding:8px 10px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <span
+        style="font-family:var(--mono);font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em">🔌
+        Chrome DevTools Protocol</span>
+      <span id="cdpStatus" style="font-family:var(--mono);font-size:9px;color:var(--text-muted)">Inactive</span>
+    </div>
+    <div id="cdpLogList" style="padding:8px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex:1">
+      <div style="color:var(--text-muted);font-size:11px;font-family:var(--mono)">No DevTools events yet. Start a
+        session to attach CDP.</div>
+    </div>
+  </div>
+
+  <!-- ── CONTEXT PANEL ── -->
+  <div class="panel" id="panel-context">
+    <div class="context-content">
+
+      <!-- Current URL -->
+      <div class="context-url-bar">
+        <span class="context-url-label">URL</span>
+        <span class="context-url-value" id="ctxCurrentUrl">—</span>
+      </div>
+
+      <!-- APP-LEVEL CONTEXT -->
+      <div class="ctx-section">
+        <div class="ctx-section-header">
+          <span class="ctx-section-title">App Context</span>
+          <span class="ctx-scope-badge scope-app">APP-WIDE</span>
+        </div>
+        <div class="ctx-section-body">
+
+          <!-- Seed input -->
+          <div style="margin-bottom:10px">
+            <label style="margin-bottom:5px">Paste anything — PRD, spec, user stories, bug reports</label>
+            <textarea class="seed-area" id="seedText"
+              placeholder="Paste any document, description, or notes about this application. The LLM will extract key flows, business rules, and risky areas automatically."></textarea>
+            <div class="ctx-actions">
+              <button class="btn-ctx btn-analyze" id="btnAnalyze">⚡ Analyze & Build Context</button>
+              <button class="btn-ctx btn-clear-ctx" id="btnClearCtx">Clear</button>
+            </div>
+          </div>
+
+          <!-- Edit mode toggle -->
+          <div class="edit-toggle">
+            <button class="edit-toggle-btn active" id="btnViewMode" data-mode="view">LLM View</button>
+            <button class="edit-toggle-btn" id="btnEditMode" data-mode="edit">Manual Edit</button>
+          </div>
+
+          <!-- LLM structured view -->
+          <div class="llm-view" id="llmView">
+            <div id="appSummaryView" class="ctx-summary-text ctx-empty">No context yet — paste a description above and
+              click Analyze.</div>
+            <div id="appTagsContainer" style="display:none">
+              <div
+                style="font-family:var(--mono);font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:10px 0 5px">
+                Key Flows</div>
+              <div class="ctx-tags" id="keyFlowTags"></div>
+              <div
+                style="font-family:var(--mono);font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:10px 0 5px">
+                Business Rules</div>
+              <div class="ctx-tags" id="businessRuleTags"></div>
+              <div
+                style="font-family:var(--mono);font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:10px 0 5px">
+                Risky Areas</div>
+              <div class="ctx-tags" id="riskyAreaTags"></div>
+            </div>
+          </div>
+
+          <!-- Manual edit view -->
+          <div class="manual-fields" id="manualFields">
+            <div class="form-group">
+              <label>App Description</label>
+              <textarea id="manualAppDesc" class="seed-area" style="min-height:60px"
+                placeholder="Describe the application..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Key Flows (one per line)</label>
+              <textarea id="manualKeyFlows" class="seed-area" style="min-height:55px"
+                placeholder="Login with email + OTP&#10;Create a new deal&#10;Run a pipeline report"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Business Rules (one per line)</label>
+              <textarea id="manualRules" class="seed-area" style="min-height:55px"
+                placeholder="Admin sees all records&#10;OTP expires in 5 minutes"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Risky Areas (one per line)</label>
+              <textarea id="manualRiskyAreas" class="seed-area" style="min-height:45px"
+                placeholder="Payment form&#10;Delete actions&#10;Role-based access"></textarea>
+            </div>
+            <button class="btn-ctx btn-analyze" id="btnSaveManual" style="width:100%;margin-top:4px">Save Manual
+              Context</button>
+          </div>
+
+          <!-- Diff preview -->
+          <div class="diff-preview" id="diffPreview">
+            <div class="diff-summary" id="diffSummary"></div>
+            <div id="diffRows"></div>
+            <button class="btn-confirm-merge" id="btnConfirmMerge">✓ Apply This Merge</button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PAGE-LEVEL CONTEXT -->
+      <div class="ctx-section">
+        <div class="ctx-section-header">
+          <span class="ctx-section-title">Page Context</span>
+          <span class="ctx-scope-badge scope-page">THIS PAGE</span>
+        </div>
+        <div class="ctx-section-body">
+          <div class="form-group">
+            <label>Page-specific description or rules</label>
+            <textarea class="seed-area" id="pageDesc" style="min-height:60px"
+              placeholder="Describe what this specific page does, any page-specific rules or expected behaviors..."></textarea>
+          </div>
+          <button class="btn-ctx btn-analyze" id="btnSavePageCtx" style="width:100%">Save Page Context</button>
+          <div id="pageSummaryView" style="margin-top:10px"></div>
+        </div>
+      </div>
+
+      <!-- DYNAMIC CONTEXT -->
+      <div class="ctx-section">
+        <div class="ctx-section-header">
+          <span class="ctx-section-title">Session Learnings</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="ctx-scope-badge scope-dynamic">LIVE</span>
+            <button class="btn-clear-dynamic" id="btnClearDynamic">Clear</button>
+          </div>
+        </div>
+        <div class="ctx-section-body">
+          <div class="learning-list" id="learningList">
+            <div class="ctx-empty">No session learnings yet. Start a test session to build dynamic context.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── SUMMARY PANEL ── -->
+  <div class="panel" id="panel-summary">
+    <div style="padding:10px;overflow-y:auto;flex:1" id="summaryContent">
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div>No summary yet</div>
+        <div style="font-size:10px;font-family:var(--mono)">Run a session to generate a detailed report</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SETTINGS PANEL ── -->
+  <div class="panel" id="panel-settings">
+    <div class="settings-content">
+
+      <!-- LLM Provider -->
+      <div class="settings-section">
+        <h3>LLM Provider</h3>
+        <div class="form-group">
+          <label>Provider</label>
+          <select id="providerSelect">
+            <option value="">— Heuristics Only —</option>
+            <option value="claude">Claude (Anthropic)</option>
+            <option value="openai">OpenAI</option>
+            <option value="gemini">Gemini (Google)</option>
+            <option value="custom">Custom / Self-hosted</option>
+          </select>
+        </div>
+        <div id="fields-claude" class="provider-fields">
+          <div class="form-group"><label>API Key</label><input type="password" id="claude-apiKey"
+              placeholder="sk-ant-..." /></div>
+          <div class="form-group"><label>Model</label>
+            <select id="claude-model">
+              <option value="claude-sonnet-4-5">claude-sonnet-4-5</option>
+              <option value="claude-opus-4-5">claude-opus-4-5</option>
+              <option value="claude-haiku-4-5-20251001">claude-haiku-4-5</option>
+            </select>
+          </div>
+        </div>
+        <div id="fields-openai" class="provider-fields">
+          <div class="form-group"><label>API Key</label><input type="password" id="openai-apiKey"
+              placeholder="sk-..." /></div>
+          <div class="form-group"><label>Model</label>
+            <select id="openai-model">
+              <option value="gpt-4o">gpt-4o</option>
+              <option value="gpt-4o-mini">gpt-4o-mini</option>
+              <option value="gpt-4-turbo">gpt-4-turbo</option>
+            </select>
+          </div>
+        </div>
+        <div id="fields-gemini" class="provider-fields">
+          <div class="form-group"><label>API Key</label><input type="password" id="gemini-apiKey"
+              placeholder="AIza..." /></div>
+          <div class="form-group"><label>Model</label>
+            <select id="gemini-model">
+              <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+              <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+              <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+            </select>
+          </div>
+        </div>
+        <div id="fields-custom" class="provider-fields">
+          <div class="form-group"><label>Base URL</label><input type="text" id="custom-baseUrl"
+              placeholder="http://localhost:11434/v1" /></div>
+          <div class="form-group"><label>Auth Header</label><input type="text" id="custom-authHeader"
+              placeholder="Authorization" /></div>
+          <div class="form-group"><label>Auth Key / Token</label><input type="password" id="custom-authKey"
+              placeholder="Bearer token or API key" /></div>
+          <div class="form-group"><label>Model Name</label><input type="text" id="custom-model"
+              placeholder="llama3, mistral, etc." /></div>
+        </div>
+        <button class="btn-test-conn" id="btnTestConn">Test Connection</button>
+        <div class="conn-status" id="connStatus"></div>
+      </div>
+
+      <!-- Environments -->
+      <div class="settings-section">
+        <h3>Environments</h3>
+        <div class="env-list" id="envList"></div>
+        <div class="add-env-form">
+          <h4>Add Environment</h4>
+          <div class="form-group"><label>Name</label><input type="text" id="envName"
+              placeholder="Production, Staging, Local..." /></div>
+          <div class="form-group"><label>Base URL</label><input type="text" id="envBaseUrl"
+              placeholder="https://app.mysite.com" /></div>
+          <div class="form-group"><label>Description (optional)</label><input type="text" id="envDesc"
+              placeholder="Main production environment" /></div>
+          <button class="btn-add-env" id="btnAddEnv">+ Add Environment</button>
+        </div>
+      </div>
+
+      <!-- Session Options -->
+      <div class="settings-section">
+        <h3>Session Options</h3>
+        <div class="form-group"><label>Max LLM Actions</label><input type="number" id="maxActions" value="30" min="5"
+            max="100" /></div>
+      </div>
+
+      <button class="btn-save" id="btnSaveSettings">Save Settings</button>
+    </div>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+
+</html>
